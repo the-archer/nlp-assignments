@@ -1,0 +1,20 @@
+You will write a Python program which will take a string as the first parameter, and write an output file called anagram_out.txt which contains of all the anagrams (permutations) of the string, one per line, sorted alphabetically. If you use Python 2.7, name your program anagram.py; if you use Python 3.4, name your program anagram3.py. For example, your program will be expected to handle:
+
+> python anagram.py 'ron'
+
+This program will output a file with the following 6 lines, in this order:
+
+nor
+nro
+onr
+orn
+rno
+ron
+
+You can also test your program by comparing the output on the string ramesh to the test file (anagram_ramesh.txt). The actual test will be done with different strings.
+
+Notes:
+
+Clarification (January 15): The exercise asks you to compute anagrams; therefore you may NOT use Python functions or libraries that compute permutations directly, such as itertools.permutations() ; this is the part of the exercise that you need to implement yourselves.
+You may use Python's built-in functions to do the sorting of the strings; there's no need to implement your own sorting algorithm or worry about culturally specific sorting.
+The test strings will not include multiple occurrences of the same character (so for example the word need, which has the letter e twice, will not be used as a test string). Therefore, you do not need to worry about handling these cases.
