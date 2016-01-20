@@ -1,0 +1,18 @@
+You will write a Python program which will take a path to an input file (absolute path name) as the first parameter. It will read the file as a binary file, and assume that it contains characters from Unicode's Basic Multilingual Plane (U+0000 to U+FFFF) in UTF-16 encoding (big endian), that is every 2 bytes correspond to one character and directly encode that character's Unicode code point. The program will encode each character in UTF-8 (between 1 and 3 bytes), and write the encoded bytes to a file called utf8encoder_out.txt. If you use Python 2.7, name your program utf8encoder.py; if you use Python 3.4, name your program utf8encoder3.py. For example, your program will be expected to handle:
+
+> python utf8encoder.py /path/to/input
+
+You can test your program by running it on the following input files and comparing the program output to the corresponding output files.
+
+english_in.txt , english_out.txt
+arabic_in.txt , arabic_out.txt
+gujarati_in.txt , gujarati_out.txt
+japanese_in.txt , japanese_out.txt
+The actual test will be done with similar files.
+
+Notes:
+
+Clarification (January 15): The exercise asks you to compute character encodings; therefore you may NOT use Python functions or libraries that directly decode or encode characters, such as codec.encode() or codec.decode() ; this is the part of the exercise that you need to implement yourselves.
+You may assume that the input is proper UTF-16 and encodes proper characters, so there's no need to test the input or worry about the security issues that are brought up in the UTF-8 specification.
+The point of the exercise is encoding the characters. You may use external resources to learn how to read, process and write binary strings in Python, but computation of the actual byte values must be your own work.
+You may use any type of arithmetic for computing the byte values (bitwise, integer, floating point, etc.) as long as it gives the correct results.
