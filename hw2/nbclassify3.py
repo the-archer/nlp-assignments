@@ -3,7 +3,7 @@ from glob import glob
 import string
 import math
 import pickle
-from tokenizer.py import getTokens
+from tokenizer import getTokens
 
 def two_class_classify(path):
 	para = pickle.load(open("nbmodel.txt", "rb"))
@@ -12,6 +12,18 @@ def two_class_classify(path):
 	for d in docs:
 		c1 = applyMultinomialNB(["deceptive", "truthful"], para[0][0], para[0][1], para[0][2], d)
 		c2 = applyMultinomialNB(["positive", "negative"], para[1][0], para[1][1], para[1][2], d)
+		f1.write(c1 + " " + c2 + " " + d + '\n')
+	f1.close()
+
+def four_class_classify(path):
+	para = pickle.load(open("nbmodel.txt", "rb"))
+	docs = glob(path+"*/*/*/*.txt")
+	f1 = open("nboutput.txt", "w")
+	for d in docs:
+		c = applyMultinomialNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], para[0][0], para[0][1], para[0][2], d)
+		#c2 = applyMultinomialNB(["positive", "negative"], para[1][0], para[1][1], para[1][2], d)
+		c1 = c.split("_")[0]
+		c2 = c.split("_")[1]
 		f1.write(c1 + " " + c2 + " " + d + '\n')
 	f1.close()
 
@@ -34,6 +46,10 @@ def applyMultinomialNB(C, V, prior, condprob, d):
 			best = score[c]
 	return maxc
 
-if __name__ == '__main__':
-	path = sys.argv[1]
+def main(path):
 	two_class_classify(path)
+	#four_class_classify(path)
+
+
+if __name__ == '__main__':
+	main(sys.argv[1])

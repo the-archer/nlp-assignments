@@ -6,6 +6,19 @@ import pickle
 from tokenizer import getTokens
 
 
+def four_class_classification(path):
+	docpath = dict()
+	docpath["deceptive_positive"] = glob(path+"positive*/deceptive*/*/*.txt")		
+	docpath["truthful_positive"] = glob(path+"positive*/truthful*/*/*.txt")
+	docpath["deceptive_negative"] = glob(path+"negative*/deceptive*/*/*.txt")
+	docpath["truthful_negative"] = glob(path+"negative*/truthful*/*/*.txt")
+	para = []
+	para.append(trainMultinomialNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
+	#para.append(trainMultinomialNB(["positive", "negative"], docpath))
+	#print (para[1])
+	pickle.dump(para, open("nbmodel.txt", "wb"))
+
+
 def two_class_classification(path):
 	docpath = dict()
 	docpath["deceptive"] = glob(path+"*/deceptive*/*/*.txt")		
@@ -17,6 +30,8 @@ def two_class_classification(path):
 	para.append(trainMultinomialNB(["positive", "negative"], docpath))
 	#print (para[1])
 	pickle.dump(para, open("nbmodel.txt", "wb"))
+
+
 
 
 
@@ -45,7 +60,7 @@ def trainMultinomialNB(C, D):
 	for c in C:
 		Nc = len(D[c])
 		prior[c] = math.log(Nc/N)
-		print (prior[c])
+		#print (prior[c])
 		T = dict() 
 		for doc in D[c]:
 			with open(doc, "r") as f1:
@@ -70,6 +85,10 @@ def trainMultinomialNB(C, D):
 			
 	return [Vocab, prior, condprob]
 
-if __name__ == '__main__':
-	path = sys.argv[1]
+def main(path):
 	two_class_classification(path)
+	#four_class_classification(path)
+
+
+if __name__ == '__main__':
+	main(sys.argv[1])
