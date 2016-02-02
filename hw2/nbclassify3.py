@@ -3,7 +3,7 @@ from glob import glob
 import string
 import math
 import pickle
-from tokenizer import getTokens
+from tokenizer.py import getTokens
 
 def two_class_classify(path):
 	para = pickle.load(open("nbmodel.txt", "rb"))
