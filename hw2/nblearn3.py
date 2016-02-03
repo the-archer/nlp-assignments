@@ -13,8 +13,8 @@ def four_class_classification(path):
 	docpath["deceptive_negative"] = glob(path+"negative*/deceptive*/*/*.txt")
 	docpath["truthful_negative"] = glob(path+"negative*/truthful*/*/*.txt")
 	para = []
-	para.append(trainMultinomialNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
-	#para.append(trainMultinomialNB(["positive", "negative"], docpath))
+	#para.append(trainMultinomialNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
+	para.append(trainBernoulliNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
 	#print (para[1])
 	pickle.dump(para, open("nbmodel.txt", "wb"))
 
@@ -26,14 +26,29 @@ def two_class_classification(path):
 	docpath["positive"] = glob(path+"positive*/*/*/*.txt")
 	docpath["negative"] = glob(path+"negative*/*/*/*.txt")
 	para = []
-	para.append(trainMultinomialNB(["deceptive", "truthful"], docpath))
-	para.append(trainMultinomialNB(["positive", "negative"], docpath))
+	#para.append(trainMultinomialNB(["deceptive", "truthful"], docpath))
+	para.append(trainBernoulliNB(["deceptive", "truthful"], docpath))
+	#para.append(trainMultinomialNB(["positive", "negative"], docpath))
+	para.append(trainBernoulliNB(["positive", "negative"], docpath))
 	#print (para[1])
 	pickle.dump(para, open("nbmodel.txt", "wb"))
 
+def SelectFeatures(D, c, k):
+	V = ExtractVocabulary(D)
+	L = []
+	for t in V:
+		util = ComputeFeatureUtility(D, t, c)
+		L.append((util, t))
+	L.sort(reverse=True)
+	return set([x[1] for x in range(0, min(len(L), k))])
+	
+
+def ComputeFeatureUtility(D, t, c):
+	return MaxFreqBased(D, t, c)
 
 
-
+def MaxFreqBased(D, t, c):
+	return 0
 
 
 def ExtractVocabulary(d):
@@ -44,6 +59,45 @@ def ExtractVocabulary(d):
 				tokens = getTokens(line.rstrip('\n'))
 				V = V | set(tokens)
 	return V
+
+def trainBernoulliNB(C, D):
+	Vocab = set()
+	N = 0
+	for c in C:
+		Vocab |= ExtractVocabulary(D[c])
+		N += len(D[c])
+	#print (Vocab)
+	prior = dict()
+	condprob = dict()
+	for v in Vocab:
+		condprob[v] = dict()
+	for c in C:
+		Nc = len(D[c])
+		prior[c] = (Nc/N)
+		#print (prior[c])
+		T = dict() 
+		for doc in D[c]:
+			t = dict()
+			with open(doc, "r") as f1:
+				for line in f1:
+					tokens = getTokens(line.rstrip('\n'))
+					for token in tokens:
+						t[token] = 1
+							
+			for token in t:
+				if token in T:
+					T[token] += 1
+				else:
+					T[token] = 1
+			
+
+		for v in Vocab:
+			if v in T:
+				condprob[v][c] = (T[v] + 1)/(Nc + 2)
+			else:
+				condprob[v][c] = 1/(Nc+2)
+			
+	return [Vocab, prior, condprob]
 
 
 def trainMultinomialNB(C, D):
@@ -79,6 +133,9 @@ def trainMultinomialNB(C, D):
 			if v not in T:
 				T[v] = 0
 			summ += (T[v]+1)
+		print (c)
+		print (summ - len(Vocab))
+		print (len(Vocab))
 		for v in Vocab:
 			cp = math.log((T[v]+1)/summ)
 			condprob[v][c] = cp
@@ -86,8 +143,8 @@ def trainMultinomialNB(C, D):
 	return [Vocab, prior, condprob]
 
 def main(path):
-	two_class_classification(path)
-	#four_class_classification(path)
+	#two_class_classification(path)
+	four_class_classification(path)
 
 
 if __name__ == '__main__':
