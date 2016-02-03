@@ -13,8 +13,8 @@ def four_class_classification(path):
 	docpath["deceptive_negative"] = glob(path+"negative*/deceptive*/*/*.txt")
 	docpath["truthful_negative"] = glob(path+"negative*/truthful*/*/*.txt")
 	para = []
-	#para.append(trainMultinomialNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
-	para.append(trainBernoulliNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
+	para.append(trainMultinomialNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
+	#para.append(trainBernoulliNB(["deceptive_positive", "truthful_positive", "deceptive_negative", "truthful_negative"], docpath))
 	#print (para[1])
 	pickle.dump(para, open("nbmodel.txt", "wb"))
 
@@ -26,29 +26,32 @@ def two_class_classification(path):
 	docpath["positive"] = glob(path+"positive*/*/*/*.txt")
 	docpath["negative"] = glob(path+"negative*/*/*/*.txt")
 	para = []
-	#para.append(trainMultinomialNB(["deceptive", "truthful"], docpath))
-	para.append(trainBernoulliNB(["deceptive", "truthful"], docpath))
-	#para.append(trainMultinomialNB(["positive", "negative"], docpath))
-	para.append(trainBernoulliNB(["positive", "negative"], docpath))
+	para.append(trainMultinomialNB(["deceptive", "truthful"], docpath))
+	#para.append(trainBernoulliNB(["deceptive", "truthful"], docpath))
+	para.append(trainMultinomialNB(["positive", "negative"], docpath))
+	#para.append(trainBernoulliNB(["positive", "negative"], docpath))
 	#print (para[1])
 	pickle.dump(para, open("nbmodel.txt", "wb"))
 
-def SelectFeatures(D, c, k):
-	V = ExtractVocabulary(D)
+def SelectFeatures(D, c, k, tokcount, V):
+	#V = ExtractVocabulary(D)
 	L = []
 	for t in V:
-		util = ComputeFeatureUtility(D, t, c)
+		util = ComputeFeatureUtility(D, t, c, tokcount)
 		L.append((util, t))
 	L.sort(reverse=True)
-	return set([x[1] for x in range(0, min(len(L), k))])
+	return set([L[x][1] for x in range(10, min(len(L), k))])
 	
 
-def ComputeFeatureUtility(D, t, c):
-	return MaxFreqBased(D, t, c)
+def ComputeFeatureUtility(D, t, c, tokcount):
+	return MaxFreqBased(D, t, c, tokcount)
 
 
-def MaxFreqBased(D, t, c):
-	return 0
+def MaxFreqBased(D, t, c, tokcount):
+	if t in tokcount[c]:
+		return tokcount[c][t]
+	else:
+		return 0
 
 
 def ExtractVocabulary(d):
@@ -103,48 +106,56 @@ def trainBernoulliNB(C, D):
 def trainMultinomialNB(C, D):
 	Vocab = set()
 	N = 0
+	tokcount = dict()
+	features = set()
 	for c in C:
 		Vocab |= ExtractVocabulary(D[c])
 		N += len(D[c])
-	#print (Vocab)
-	prior = dict()
-	condprob = dict()
-	for v in Vocab:
-		condprob[v] = dict()
 	for c in C:
-		Nc = len(D[c])
-		prior[c] = math.log(Nc/N)
-		#print (prior[c])
-		T = dict() 
+		tokcount[c] = dict()
 		for doc in D[c]:
 			with open(doc, "r") as f1:
 				for line in f1:
 					tokens = getTokens(line.rstrip('\n'))
 					for token in tokens:
-						if token in T:
-							T[token] += 1
+						if token in tokcount[c]:
+							tokcount[c][token] += 1
 						else:
-							T[token] = 1
+							tokcount[c][token] = 1
+		features |= SelectFeatures(D, c, 5000, tokcount, Vocab)
+
+	#features = Vocab
+	#print (Vocab)
+	prior = dict()
+	condprob = dict()
+	for v in features:
+		condprob[v] = dict()
+	for c in C:
+		Nc = len(D[c])
+		prior[c] = math.log(Nc/N)
+		#print (prior[c])
+		
+		
 							
 				
 						
 		summ = 0
-		for v in Vocab:
-			if v not in T:
-				T[v] = 0
-			summ += (T[v]+1)
-		print (c)
-		print (summ - len(Vocab))
-		print (len(Vocab))
-		for v in Vocab:
-			cp = math.log((T[v]+1)/summ)
+		for v in features:
+			if v not in tokcount[c]:
+				tokcount[c][v] = 0
+			summ += (tokcount[c][v]+1)
+		#print (c)
+		#print (summ - len(Vocab))
+		#print (len(Vocab))
+		for v in features:
+			cp = math.log((tokcount[c][v]+1)/summ)
 			condprob[v][c] = cp
 			
-	return [Vocab, prior, condprob]
+	return [features, prior, condprob]
 
 def main(path):
-	#two_class_classification(path)
-	four_class_classification(path)
+	two_class_classification(path)
+	#four_class_classification(path)
 
 
 if __name__ == '__main__':
