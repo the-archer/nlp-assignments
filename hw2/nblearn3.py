@@ -33,21 +33,54 @@ def two_class_classification(path):
 	#print (para[1])
 	pickle.dump(para, open("nbmodel.txt", "wb"))
 
-def SelectFeatures(D, c, k, tokcount, V):
+def SelectFeatures(D, c, k, tokcount, V, tokind, C):
 	#V = ExtractVocabulary(D)
 	L = []
 	for t in V:
-		util = ComputeFeatureUtility(D, t, c, tokcount)
+		util = ComputeFeatureUtility(D, t, c, tokcount, tokind, C)
 		L.append((util, t))
 	L.sort(reverse=True)
-	return set([L[x][1] for x in range(10, min(len(L), k))])
+	#print (L[:20])
+	return set([L[x][1] for x in range(0, min(len(L), k))])
 	
 
-def ComputeFeatureUtility(D, t, c, tokcount):
-	return MaxFreqBased(D, t, c, tokcount)
+def ComputeFeatureUtility(D, t, c, tokcount, tokind, C):
+	#return MaxFreqBased(t, c, tokcount)
+	return MutualInfo(D, t, c, tokind, C)
 
+def MutualInfo(D, t, c, tokind, C):
+	if t in tokind[c]:
+		n11 = tokind[c][t]
+	else:
+		n11 = 0
+	n01 = len(D[c]) - n11
+	n10 = 0
+	n = 0
+	for cl in C:
+		if cl != c:
+			if t in tokind[cl]:
+				n10 += tokind[cl][t]
+		n += len(D[c])
+	n00 = n - n11 - n01 - n10
+	mi = 0
+	a = (n11/n)
+	if a != 0:
+		mi += (n11/n)*math.log((n*n11)/((n10+n11)*(n01+n11)))
+	a = (n01/n)
+	if a != 0:
+		mi += (n01/n)*math.log((n*n01)/((n00+n01)*(n01+n11)))
+	
+	a = (n10/n)
+	if a != 0:
+		mi += (n10/n)*math.log((n*n10)/((n10+n11)*(n00+n10)))
+	a = (n00/n)
+	if a != 0:
+		mi += (n00/n)*math.log((n*n00)/((n00+n01)*(n00+n10)))
+		
+		
+	return mi
 
-def MaxFreqBased(D, t, c, tokcount):
+def MaxFreqBased(t, c, tokcount):
 	if t in tokcount[c]:
 		return tokcount[c][t]
 	else:
@@ -107,13 +140,16 @@ def trainMultinomialNB(C, D):
 	Vocab = set()
 	N = 0
 	tokcount = dict()
+	tokind = dict()
 	features = set()
 	for c in C:
 		Vocab |= ExtractVocabulary(D[c])
 		N += len(D[c])
 	for c in C:
 		tokcount[c] = dict()
+		tokind[c] = dict()
 		for doc in D[c]:
+			t = dict()
 			with open(doc, "r") as f1:
 				for line in f1:
 					tokens = getTokens(line.rstrip('\n'))
@@ -122,7 +158,15 @@ def trainMultinomialNB(C, D):
 							tokcount[c][token] += 1
 						else:
 							tokcount[c][token] = 1
-		features |= SelectFeatures(D, c, 5000, tokcount, Vocab)
+						t[token] = 1
+			for token in t:
+				if token in tokind[c]:
+					tokind[c][token] += 1
+				else:
+					tokind[c][token] = 1
+
+	for c in C:
+		features |= SelectFeatures(D, c, 2000, tokcount, Vocab, tokind, C)
 
 	#features = Vocab
 	#print (Vocab)
